@@ -23,7 +23,7 @@ version = "0.1"
 defaultWarning = None
 defaultCritical = "backup"
 
-#def getRoleKa(client):
+def getRoleKa(client):
     # We're looking for a line like this:
     #
 
@@ -72,3 +72,8 @@ if __name__ == '__main__':
     kaExpectedState = opts.kaExpectedState or "master"
     critical = opts.critical or defaultCritical
 
+    # now, connect to the target and try to get the values
+    client = schecks.connect(hostname, port, sshKeyFile, passPhrase, user)
+    kaCurrentRole = getRoleKa(client)
+
+                             
