@@ -24,18 +24,21 @@ defaultWarning = None
 defaultCritical = "backup"
 
 def getRoleKa(client):
-    # We're looking for a line like this:
+    # We're looking for a line similar to this:
     # KEEPALIVED-MIB::vrrpInstanceState.1 = INTEGER: master(2)
     cmdGetRole = r""" /usr/bin/snmpget -v2c -cpublic localhost KEEPALIVED-MIB::vrrpInstanceState.1 """
-    #print(client.exec_command(cmdGetRole))
-    stdin, stdout, stderr = client.exec_command(cmdGetRole)
-    # parse the stoutput, and store the current role of ka
-    currentRole = [l for l in stdout][0].strip().split(' ')[-1].rstrip('\n').split('(')[0]
+    # we'll try to get the status of the instance of KA
+    try:
+        stdin, stdout, stderr = client.exec_command(cmdGetRole)
+        # parse the stoutput, and store the current role of ka
+        currentRole = [l for l in stdout][0].strip().split(' ')[-1].rstrip('\n').split('(')[0]
+        return currentRole
+    except Exception as e:
+        print(e)
+    finally:
+        # before return, close the connection
+        client.close()
 
-    # before return, close the connection
-    client.close()
-
-    return currentRole
 
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + version)
@@ -89,12 +92,9 @@ if __name__ == '__main__':
     if kaCurrentRole == critical:
         print("Critical: expected role was {}, but the current is {}.".format(kaExpectedState, kaCurrentRole))
         sys.exit(2)
-    elif kaCurrentRole == "fault":
-        print("KA is in fault state.")
-        sys.exit(2)
     elif kaCurrentRole == kaExpectedState:
         print("OK: the expected role was {}, and the current is {}.".format(kaExpectedState, kaCurrentRole))
         sys.exit(0)
     else:
-        print("Unknown: SNMP or KA isn't running and I can't get the current role.")
+        print("Unknown: SNMP or KA isn't running and I can't get the current role. Or maybe it is in fault state.")
         sys.exit(3)
