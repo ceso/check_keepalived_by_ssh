@@ -12,11 +12,11 @@ import optparse
 myDir = os.path.dirname(__file__)
 sys.path.insert(0, myDir)
 
-#try:
-#    import schecks
-#except ImportError:
-#    print("ERROR: This plugin needs the local schecks.py lib. Please install it")
-#    sys.exit(2)
+try:
+    import schecks
+except ImportError:
+    print("ERROR: This plugin needs the local schecks.py lib. Please install it")
+    sys.exit(2)
 
 version = "0.1"
 # There is no Warning, only critical
@@ -25,7 +25,17 @@ defaultCritical = "backup"
 
 def getRoleKa(client):
     # We're looking for a line like this:
-    #
+    # KEEPALIVED-MIB::vrrpInstanceState.1 = INTEGER: master(2)
+    cmdGetRole = r""" /usr/bin/snmpget -v2c -cpublic localhost KEEPALIVED-MIB::vrrpInstanceState.1 """
+    #print(client.exec_command(cmdGetRole))
+    stdin, stdout, stderr = client.exec_command(cmdGetRole)
+    # parse the stoutput, and store the current role of ka
+    currentRole = [l for l in stdout][0].strip().split(' ')[-1].rstrip('\n').split('(')[0]
+
+    # before return, close the connection
+    client.close()
+
+    return currentRole
 
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + version)
@@ -76,4 +86,15 @@ if __name__ == '__main__':
     client = schecks.connect(hostname, port, sshKeyFile, passPhrase, user)
     kaCurrentRole = getRoleKa(client)
 
-                             
+    if kaCurrentRole == critical:
+        print("Critical: expected role was {}, but the current is {}.".format(kaExpectedState, kaCurrentRole))
+        sys.exit(2)
+    elif kaCurrentRole == "fault":
+        print("KA is in fault state.")
+        sys.exit(2)
+    elif kaCurrentRole == kaExpectedState:
+        print("OK: the expected role was {}, and the current is {}.".format(kaExpectedState, kaCurrentRole))
+        sys.exit(0)
+    else:
+        print("Unknown: SNMP or KA isn't running and I can't get the current role.")
+        sys.exit(3)
