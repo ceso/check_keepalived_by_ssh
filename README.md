@@ -8,10 +8,16 @@ This is based in check-linux-by-ssh by nanpruba:
 # Requeriments
 For this script work, you need: 
 
-- Have installed schekcs.py:
+- Have schekcs.py:
 
 https://github.com/naparuba/check-linux-by-ssh/blob/master/schecks.py
 
-- Have configured SNMP inside the hosts who are running Keepalived, for achievement this, you need do the following:
+- Have configured SNMP inside the host/s is running Keepalived. For achievement this, you need to have the following inside /etc/snmp/snmpd.conf:
+
+
+    rocommunity public
+    
+    master agentx
+
  
     
