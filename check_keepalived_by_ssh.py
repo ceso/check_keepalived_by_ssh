@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 '''
     This script is a check of for known the role which have
-    a instance of keepalived
+    a instance of keepalived - Leandro Lemos 20161122
+    https://github.com/ceso/check_keepalived_by_ssh
 '''
 import os
 import sys
